@@ -12,16 +12,22 @@ var factory = new ConnectionFactory
     // UserName = "admin",
     // Password = "ejrrpdlawm1!"
     Password = "Cokee",
-    Ssl = new SslOption("mqtt.cokee.io", "", enabled:true)
+    Ssl = new SslOption("mqtt.cokee.io", "", enabled: true)
 };
 
-var queue = "100007-reservation";
-// var queue = "queue_game_info";
+//var queue = "100007-reservation";
+ var queue = "demo-fanout-test";
 
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
+channel.ExchangeDeclare(exchange: "topic_logs", ExchangeType.Fanout);
 channel.QueueDeclare(queue, durable: true, exclusive: false, autoDelete: false, arguments: null);
+channel.BasicQos(0, 1, false);
+
+channel.QueueBind(queue, "topic_logs", "");
+
+//channel.QueueDeclare(queue, durable: false, exclusive: false, autoDelete: false, arguments: null);
 channel.ConfirmSelect();
 channel.WaitForConfirmsOrDie();
 Console.WriteLine("Connected to " + factory.Uri);

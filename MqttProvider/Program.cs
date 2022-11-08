@@ -14,17 +14,26 @@ var factory = new ConnectionFactory
     Ssl = new SslOption("mqtt.cokee.io", "", enabled:true)
 };
 
-var queue = "100007-reservation";
+var queue = "demo-fanout-test";
 // var queue = "queue_game_info";
 
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
+channel.ExchangeDeclare(exchange: "topic_logs", ExchangeType.Fanout);
+
 channel.QueueDeclare(queue, durable: true, exclusive: false, autoDelete: false, arguments: null);
+
+
 var message = new { name = "Producer", message = "Hello" };
 var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
 
-channel.BasicPublish("", queue, null, body);
+var properties = channel.CreateBasicProperties();
+properties.Persistent = true;
+channel.BasicPublish(exchange: "topic_logs", routingKey: "", basicProperties: properties, body: body);
+
+
+channel.BasicPublish("topic_logs", "", null, body);
 // Add services to the container.
 
 builder.Services.AddControllers();
